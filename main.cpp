@@ -1,15 +1,13 @@
 /*
 	To-do-list
 
-	1. .vs, .fs 파일을 shaders 폴더로 이동하고, 작동 test => ok	
-	2. gap(Y)에 대한 부분 일반화 확인
-	   - gVgaWidth, gVgaHeight 추가 => ok
-	3. MonitorID(DisplayID) 관련 option 추가 => ok
-	4. Fullscreen mode 기능 확인 (F12 key 눌렀을 때 작동하는 code 확인) 
-	  => ok (SwitchWindowedFullscreen 함수 활용)
+	1. move .vs, .fs files to shaders folder => done
+	2. add gVgaWidth, gVgaHeight => done
+	3. add MonitorID(DisplayID) => done
+	4. check Fullscreen mode (SwitchWindowedFullscreen) => done
 
-	5. CRT-Geom-Halation 예제로 test (BSNES 관련 파일을 anoxic에게 공유)
-	6. AddTexture 메모리 할당 초기화 추가
+	5. test CRT-Geom-Halation shader
+	6. add AddTextureAndAlloc function (allocate memory)
 */
 
 #include <iostream>
@@ -34,7 +32,6 @@ SDL_GLContext m_context;
 void initRenderingOpenGL()
 {
 	SWOSGLRenderer::Get().CreateWindow(m_windowWidth, m_windowHeight);
-	SWOSGLRenderer::Get().SetUsingShader(shname);
 	SWOSGLRenderer::Get().Initialize();
 }
 
@@ -88,7 +85,7 @@ int main(int argc, char** argv)
 			}
 
 		}
-#if (1)
+#if (0)
 		updateMenuScreenOpenGL();
 #else
 		updateGameScreenOpenGL();

@@ -64,7 +64,11 @@ bool SWOSGLRenderer::CreateWindow(int w, int h)
 #endif
 
 	m_Window = SDL_CreateWindow(
+#ifdef SWOS_2020
 		"SWOS 2020",
+#else
+		"OpenGL Rendering and Shader Test for SWOS 2020",
+#endif
 		SDL_WINDOWPOS_CENTERED_DISPLAY(gDisplayID), SDL_WINDOWPOS_CENTERED_DISPLAY(gDisplayID),
 		m_WindowWidth, m_WindowHeight, wflags
 	);
@@ -72,7 +76,6 @@ bool SWOSGLRenderer::CreateWindow(int w, int h)
 		std::cerr << "[ERROR]:: Failed to create Window. " << SDL_GetError() << std::endl;
 		return false;
 	}
-
 
 	// Set Render Driver
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
@@ -120,7 +123,7 @@ bool SWOSGLRenderer::CreateWindow(int w, int h)
 
 	std::cout << "Created Window with " << m_WindowWidth << "x" << m_WindowHeight << " size. RenderMode: OpenGL\n";
 
-	m_RenderMode = RM_OpenGL;
+	m_ShaderMode = SM_CRT_SIMPLE;
 
 	return true;
 }
@@ -162,7 +165,12 @@ void SWOSGLRenderer::Initialize()
 {
 	// Load Shaders
 	AddShader("basic", "sprite.vs", "sprite.fs");
+
 	AddShader("crt-geom", "crt-geom.vs", "crt-geom.fs");
+	AddShader("gaussian-horiz", "def.vs", "gaussian-horiz.fs");
+	AddShader("gaussian-vert", "def.vs", "gaussian-vert.fs");
+	AddShader("combine", "def.vs", "combine.fs");
+
 	AddShader("crt-simple", "crt-simple.vs", "crt-simple.fs");
 	AddShader("advanced-aa", "advanced-aa.vs", "advanced-aa.fs");
 	AddShader("lottes", "lottes.vs", "lottes.fs");
@@ -174,22 +182,54 @@ void SWOSGLRenderer::Initialize()
 	// it seems it is related to the limitation of OpenGL compatibility of the intel graphic card
 	// AddShader("pal-r57shell", "def.vs", "pal-r57shell.fs");  
 
-	// Setup multi-phase(pass) shaders
-	GLPhase ph0 = GLPhase(
-		GetShader("advanced-aa"), 
-		glm::vec2(gVgaWidth, gVgaHeight), 
-		glm::vec2(gVgaWidth, gVgaHeight), 
-		GL_NEAREST
-	);
-	GLPhase ph1 = GLPhase(
-		GetShader("crt-geom"), 
-		glm::vec2(gVgaWidth, gVgaHeight), 
-		glm::vec2(m_WindowWidth, m_WindowHeight), 
-		GL_NEAREST
-	);	
+	// Set Shader Mode
+#if (0)
+	m_ShaderMode = SM_CRT_SIMPLE;
+#elif (0)
+	m_ShaderMode = SM_CRT_LOTTES;
+#elif (0)
+	m_ShaderMode = SM_CRT_GEOM;
+#elif (1)
+	m_ShaderMode = SM_CRT_GEOM_HALATION;
+#endif
+
+	// Setup single or multi-phase(pass) shaders
 	std::vector<GLPhase> phases;
-	phases.push_back(ph0);
-	phases.push_back(ph1);
+	switch (m_ShaderMode) {
+		case SM_CRT_SIMPLE: {
+			GLPhase ph0 = GLPhase(GetShader("crt-simple"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			phases.push_back(ph0);
+			break;
+		}
+		case SM_CRT_LOTTES: {
+			GLPhase ph0 = GLPhase(GetShader("lottes"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			phases.push_back(ph0);
+			break;
+		}
+		case SM_CRT_GEOM: {
+			GLPhase ph0 = GLPhase(GetShader("crt-geom"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			phases.push_back(ph0);
+			break;
+		}
+		case SM_CRT_GEOM_HALATION: {
+			GLPhase ph0 = GLPhase(GetShader("crt-geom"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			phases.push_back(ph0);
+			GLPhase ph1 = GLPhase(GetShader("gaussian-horiz"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			phases.push_back(ph0);
+			GLPhase ph2 = GLPhase(GetShader("gaussian-vert"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			phases.push_back(ph0);
+			GLPhase ph3 = GLPhase(GetShader("combine"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			phases.push_back(ph0);
+			break;
+		}
+		default: {
+			GLPhase ph0 = GLPhase(GetShader("advanced-aa"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			phases.push_back(ph0);
+			GLPhase ph1 = GLPhase(GetShader("crt-geom"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST);
+			phases.push_back(ph1);
+			break;
+		}
+	}
 	GLPostProcess::Init(phases);
 	
 	// Init Textures
@@ -267,7 +307,7 @@ void SWOSGLRenderer::getRGBA(Uint32 color, Uint8* r, Uint8* g, Uint8* b, Uint8* 
 
 void SWOSGLRenderer::updateTestMenuPixels(Uint32* pixels)
 {
-	for (register int y = 0; y < kVgaHeight; y++) {
+	for (register int y = 0; y < gVgaHeight; y++) {
 		for (register int x = 0; x < gVgaWidth; x++) {
 			if (x >= 150 / 2 && x <= gVgaWidth - 150 / 2 && y >= 200 / 2 && y <= gVgaHeight - 200 / 2) {
 				int randNo[3];
@@ -329,8 +369,7 @@ void SWOSGLRenderer::UpdateMenu()
 void SWOSGLRenderer::RenderMenu()
 {
 	GLPostProcess::Begin();
-
-#if (0)
+#if (1)
 	GetMesh("back")->Draw(GetShader("basic"), m_Projection);	// Draw "back" as Background
 #else
 	GetMesh("play")->Draw(GetShader("basic"), m_Projection);	// Draw "play" as Background
@@ -387,6 +426,11 @@ void SWOSGLRenderer::UpdateGame()
 
 void SWOSGLRenderer::RenderGame()
 {
+	GLPostProcess::Begin();
+	GetMesh("play")->Draw(GetShader("basic"), m_Projection);
+	GLPostProcess::End(m_WindowWidth, m_WindowHeight);
+
+	/*
 	m_Framebuffer->Bind();
 	glViewport(0, 0, gVgaWidth, gVgaHeight);
 	GetMesh("play")->Draw(GetShader("basic"), m_Projection);
@@ -394,6 +438,7 @@ void SWOSGLRenderer::RenderGame()
 	
 	glViewport(0, 0, m_WindowWidth, m_WindowHeight);
 	m_Framebuffer->Draw(m_WindowWidth, m_WindowHeight);
+	*/
 
 #ifdef IMGUI_OVERLAY
 	ImGui::Render();
@@ -405,20 +450,20 @@ void SWOSGLRenderer::RenderGame()
 
 std::shared_ptr<GLShader> SWOSGLRenderer::AddShader(const std::string& name, const std::string& vs_fname, const std::string& fs_fname)
 {
-	vs_fname += "shaders\' + vs_fname;
-	fs_fname += "shaders\' + fs_fname;
+	const std::string& vs_fname_with_path = "shaders\\" + vs_fname;
+	const std::string& fs_fname_with_path = "shaders\\" + fs_fname;
 
-	if (!exists(vs_fname))
+	if (!exists(vs_fname_with_path))
 		std::cerr << "File not found:" << vs_fname << "\n";
-	if (!exists(fs_fname))
+	if (!exists(fs_fname_with_path))
 		std::cerr << "File not found:" << fs_fname << "\n";
 	std::string vertexCode;
 	std::string fragmentCode;
 	try
 	{
 		// Open files
-		std::ifstream vertexShaderFile(vs_fname);
-		std::ifstream fragmentShaderFile(fs_fname);
+		std::ifstream vertexShaderFile(vs_fname_with_path);
+		std::ifstream fragmentShaderFile(fs_fname_with_path);
 		std::stringstream vShaderStream, fShaderStream;
 		// Read file's buffer contents into streams
 		vShaderStream << vertexShaderFile.rdbuf();

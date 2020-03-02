@@ -23,10 +23,11 @@ extern int m_windowWidth;
 extern int m_windowHeight;
 extern int gDisplayID;
 
-enum RenderMode
-{
-	RM_SDL,
-	RM_OpenGL
+enum ShaderMode {
+	SM_CRT_SIMPLE,
+	SM_CRT_LOTTES,
+	SM_CRT_GEOM,
+	SM_CRT_GEOM_HALATION
 };
 
 class SWOSGLRenderer
@@ -62,7 +63,7 @@ public:
 private:
 	int m_WindowWidth;
 	int m_WindowHeight;
-	int m_RenderMode;
+	int m_ShaderMode;
 	SDL_Window* m_Window;
 	SDL_GLContext m_Context;
 	SDL_Renderer* m_Renderer;
