@@ -16,8 +16,8 @@
 #include "examples/imgui_impl_sdl.h"
 #endif
 
-extern int kVgaWidth;
-extern int kVgaHeight;
+extern int gVgaWidth;
+extern int gVgaHeight;
 extern int m_windowWidth;
 extern int m_windowHeight;
 

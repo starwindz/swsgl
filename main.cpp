@@ -1,3 +1,16 @@
+/*
+	To-do-list
+
+	1. .vs, .fs 파일을 shaders 폴더로 이동하고, 작동 test
+	2. gap(Y)에 대한 부분 일반화 확인
+	3. AddTexture 메모리 할당 초기화 추가
+
+	4. MonitorID(DisplayID) 관련 option 추가
+	5. Fullscreen mode 기능 확인 (F12 key 눌렀을 때 작동하는 code 확인)
+
+	6. CRT-Geom-Halation 예제로 test (BSNES 관련 파일을 anoxic에게 공유)
+*/
+
 #include <iostream>
 #include "swosgl.h"
 
@@ -5,11 +18,11 @@
 #include "examples/imgui_impl_sdl.h"
 #endif
 
-int kVgaWidth = 480;
-int kVgaHeight = 272;
+int gVgaWidth = 480;
+int gVgaHeight = 270;
 
-int m_windowWidth = kVgaWidth * 2;
-int m_windowHeight = kVgaHeight * 2;
+int m_windowWidth = gVgaWidth * 2;
+int m_windowHeight = gVgaHeight * 2;
 
 SDL_Window* m_window;
 SDL_Renderer* m_renderer;

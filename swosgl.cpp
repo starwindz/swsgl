@@ -1,11 +1,3 @@
-/*
-	To-do-list
-	1. .vs, .fs 파일을 shaders 폴더로 이동하고, 작동 test
-	2. gap(Y)에 대한 부분 일반화 확인
-	3. AddTexture 메모리 할당 초기화 추가
-	4. CRT-Geom-Halation 예제로 test (BSNES 관련 파일을 anoxic에게 공유)
-*/
-
 #include "swosgl.h"
 #include <fstream>
 #include <sstream>
@@ -66,7 +58,6 @@ bool SWOSGLRenderer::CreateWindow(int w, int h)
 	m_WindowHeight = h;
 
 	uint8_t gap = 0;
-	if (kVgaWidth == 480) gap = 1;
 	m_Window = SDL_CreateWindow(
 		"SWOS 2020",
 #ifdef SWOS_2020
@@ -74,7 +65,7 @@ bool SWOSGLRenderer::CreateWindow(int w, int h)
 #else
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 #endif
-		m_WindowWidth, m_WindowHeight - gap * 2, wflags
+		m_WindowWidth, m_WindowHeight, wflags
 	);
 	if (!m_Window) {
 		std::cerr << "[ERROR]:: Failed to create Window. " << SDL_GetError() << std::endl;
@@ -188,13 +179,13 @@ void SWOSGLRenderer::Initialize()
 	// Setup multi-phase(pass) shaders
 	GLPhase ph0 = GLPhase(
 		GetShader("advanced-aa"), 
-		glm::vec2(kVgaWidth, kVgaHeight), 
-		glm::vec2(kVgaWidth, kVgaHeight), 
+		glm::vec2(gVgaWidth, gVgaHeight), 
+		glm::vec2(gVgaWidth, gVgaHeight), 
 		GL_NEAREST
 	);
 	GLPhase ph1 = GLPhase(
 		GetShader("crt-geom"), 
-		glm::vec2(kVgaWidth, kVgaHeight), 
+		glm::vec2(gVgaWidth, gVgaHeight), 
 		glm::vec2(m_WindowWidth, m_WindowHeight), 
 		GL_NEAREST
 	);	
@@ -220,19 +211,19 @@ void SWOSGLRenderer::Initialize()
 	// Create mesh from textures
 	AddMesh("back")->SetupMesh(vert, ind, GetTexture("back"));
 	GetMesh("back")->SetPosition(glm::vec3(0.f, 0.f, 0.f));
-	GetMesh("back")->SetSize(glm::vec3(kVgaWidth, kVgaHeight, 1.f));
+	GetMesh("back")->SetSize(glm::vec3(gVgaWidth, gVgaHeight, 1.f));
 
 	AddMesh("menu")->SetupMesh(vert, ind, GetTexture("menu"));
 	GetMesh("menu")->SetPosition(glm::vec3(0.f, 0.f, 0.f));
-	GetMesh("menu")->SetSize(glm::vec3(kVgaWidth, kVgaHeight, 1.f));
+	GetMesh("menu")->SetSize(glm::vec3(gVgaWidth, gVgaHeight, 1.f));
 
 	AddMesh("play")->SetupMesh(vert, ind, GetTexture("play"));
 	GetMesh("play")->SetPosition(glm::vec3(0.f, 0.f, 0.f));
-	GetMesh("play")->SetSize(glm::vec3(kVgaWidth, kVgaHeight, 1.f));
+	GetMesh("play")->SetSize(glm::vec3(gVgaWidth, gVgaHeight, 1.f));
 
 	m_Framebuffer = std::make_shared<GLFramebuffer>(GetShader(m_UsingShaderName), 
-		kVgaWidth, kVgaHeight, m_WindowWidth, m_WindowHeight, 8);
-	m_Projection = glm::ortho(0.f, (float)kVgaWidth, (float)kVgaHeight, 0.f, -1.f ,1.f); // kVga?
+		gVgaWidth, gVgaHeight, m_WindowWidth, m_WindowHeight, 8);
+	m_Projection = glm::ortho(0.f, (float)gVgaWidth, (float)gVgaHeight, 0.f, -1.f ,1.f); // kVga?
 }
 
 void SWOSGLRenderer::Finalize()
@@ -279,16 +270,16 @@ void SWOSGLRenderer::getRGBA(Uint32 color, Uint8* r, Uint8* g, Uint8* b, Uint8* 
 void SWOSGLRenderer::updateTestMenuPixels(Uint32* pixels)
 {
 	for (register int y = 0; y < kVgaHeight; y++) {
-		for (register int x = 0; x < kVgaWidth; x++) {
-			if (x >= 150 / 2 && x <= kVgaWidth - 150 / 2 && y >= 200 / 2 && y <= kVgaHeight - 200 / 2) {
+		for (register int x = 0; x < gVgaWidth; x++) {
+			if (x >= 150 / 2 && x <= gVgaWidth - 150 / 2 && y >= 200 / 2 && y <= gVgaHeight - 200 / 2) {
 				int randNo[3];
 				for (int i = 0; i <= 2; i++) {
 					randNo[i] = 1 + (rand() % 255);
 				}
-				pixels[y * kVgaWidth + x] = setRGBA(randNo[0], randNo[1], randNo[2], 128);
+				pixels[y * gVgaWidth + x] = setRGBA(randNo[0], randNo[1], randNo[2], 128);
 			}
 			else {
-				pixels[y * kVgaWidth + x] = setRGBA(0, 0, 0, 0);
+				pixels[y * gVgaWidth + x] = setRGBA(0, 0, 0, 0);
 			}
 		}
 	}
@@ -297,7 +288,7 @@ void SWOSGLRenderer::updateTestMenuPixels(Uint32* pixels)
 void SWOSGLRenderer::UpdateMenu()
 {
 	// Simulate menu items as a rectangle filled with random noise
-	GLuint* vsPtr = new GLuint[kVgaWidth * kVgaHeight * 4];
+	GLuint* vsPtr = new GLuint[gVgaWidth * gVgaHeight * 4];
 	updateTestMenuPixels(vsPtr);
 	GetTexture("menu")->Update(vsPtr);
 	delete vsPtr;
@@ -352,7 +343,7 @@ void SWOSGLRenderer::RenderMenu()
 
 	/*
 	m_Framebuffer->Bind();
-	glViewport(0, 0, kVgaWidth, kVgaHeight);
+	glViewport(0, 0, gVgaWidth, gVgaHeight);
 	GetMesh("back")->Draw(GetShader("basic"), m_Projection);	// Draw Background
 	GetMesh("menu")->SetColor(glm::vec4(1.f, 1.f, 1.f, m_Opacity));
 	GetMesh("menu")->Draw(GetShader("basic"), m_Projection);	// Draw Menu items
@@ -374,7 +365,7 @@ void SWOSGLRenderer::UpdateGame()
 {
 	// Get and update Game pixels
 #if (0)
-	GLuint* vsPtr = new GLuint[kVgaWidth * kVgaHeight * 4];
+	GLuint* vsPtr = new GLuint[gVgaWidth * gVgaHeight * 4];
 	updateTestMenuPixels(vsPtr);
 	GetTexture("play")->Update(vsPtr);
 	delete vsPtr;
@@ -399,7 +390,7 @@ void SWOSGLRenderer::UpdateGame()
 void SWOSGLRenderer::RenderGame()
 {
 	m_Framebuffer->Bind();
-	glViewport(0, 0, kVgaWidth, kVgaHeight);
+	glViewport(0, 0, gVgaWidth, gVgaHeight);
 	GetMesh("play")->Draw(GetShader("basic"), m_Projection);
 	m_Framebuffer->UnBind();
 	
