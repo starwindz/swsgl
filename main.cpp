@@ -1,14 +1,15 @@
 /*
 	To-do-list
 
-	1. .vs, .fs 파일을 shaders 폴더로 이동하고, 작동 test	
+	1. .vs, .fs 파일을 shaders 폴더로 이동하고, 작동 test => ok	
 	2. gap(Y)에 대한 부분 일반화 확인
-	   - gVgaWidth, gVgaHeight 추가
-	3. MonitorID(DisplayID) 관련 option 추가
-	4. AddTexture 메모리 할당 초기화 추가
+	   - gVgaWidth, gVgaHeight 추가 => ok
+	3. MonitorID(DisplayID) 관련 option 추가 => ok
+	4. Fullscreen mode 기능 확인 (F12 key 눌렀을 때 작동하는 code 확인) 
+	  => ok (SwitchWindowedFullscreen 함수 활용)
 
-	5. Fullscreen mode 기능 확인 (F12 key 눌렀을 때 작동하는 code 확인)
-	6. CRT-Geom-Halation 예제로 test (BSNES 관련 파일을 anoxic에게 공유)
+	5. CRT-Geom-Halation 예제로 test (BSNES 관련 파일을 anoxic에게 공유)
+	6. AddTexture 메모리 할당 초기화 추가
 */
 
 #include <iostream>

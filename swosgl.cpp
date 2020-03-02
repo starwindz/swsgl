@@ -73,9 +73,6 @@ bool SWOSGLRenderer::CreateWindow(int w, int h)
 		return false;
 	}
 
-#ifdef SWOS_2020
-	setWindowMode(m_windowMode);
-#endif
 
 	// Set Render Driver
 	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
