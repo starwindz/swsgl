@@ -10,6 +10,7 @@
 #include "GLMesh.h"
 #include "GLFramebuffer.h"
 #include "GLPostProcess.h"
+
 #ifdef IMGUI_OVERLAY
 #include "imgui.h"
 #include "examples/imgui_impl_opengl3.h"
@@ -20,6 +21,7 @@ extern int gVgaWidth;
 extern int gVgaHeight;
 extern int m_windowWidth;
 extern int m_windowHeight;
+extern int gDisplayID;
 
 enum RenderMode
 {

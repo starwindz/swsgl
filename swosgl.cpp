@@ -58,13 +58,14 @@ bool SWOSGLRenderer::CreateWindow(int w, int h)
 	m_WindowHeight = h;
 
 	uint8_t gap = 0;
+
+#ifdef SWOS_2020
+	gDisplayID = getMonitorID();
+#endif
+
 	m_Window = SDL_CreateWindow(
 		"SWOS 2020",
-#ifdef SWOS_2020
-		SDL_WINDOWPOS_CENTERED_DISPLAY(getMonitorID()), SDL_WINDOWPOS_CENTERED_DISPLAY(getMonitorID()),
-#else
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-#endif
+		SDL_WINDOWPOS_CENTERED_DISPLAY(gDisplayID), SDL_WINDOWPOS_CENTERED_DISPLAY(gDisplayID),
 		m_WindowWidth, m_WindowHeight, wflags
 	);
 	if (!m_Window) {
@@ -223,7 +224,7 @@ void SWOSGLRenderer::Initialize()
 
 	m_Framebuffer = std::make_shared<GLFramebuffer>(GetShader(m_UsingShaderName), 
 		gVgaWidth, gVgaHeight, m_WindowWidth, m_WindowHeight, 8);
-	m_Projection = glm::ortho(0.f, (float)gVgaWidth, (float)gVgaHeight, 0.f, -1.f ,1.f); // kVga?
+	m_Projection = glm::ortho(0.f, (float)gVgaWidth, (float)gVgaHeight, 0.f, -1.f ,1.f);
 }
 
 void SWOSGLRenderer::Finalize()
@@ -309,11 +310,11 @@ void SWOSGLRenderer::UpdateMenu()
 	if (ImGui::CollapsingHeader("Resolutions"))
 	{
 		static int modesel = -1;
-		int display_mode_count = SDL_GetNumDisplayModes(0);
+		int display_mode_count = SDL_GetNumDisplayModes(gDisplayID);
 		SDL_DisplayMode modename;
 		for (int x = 0; x < display_mode_count; x++)
 		{
-			SDL_GetDisplayMode(0, x, &modename);
+			SDL_GetDisplayMode(gDisplayID, x, &modename);
 			char modech[32];
 			sprintf_s(modech, 31, "%d x %d - %d Hz", modename.w, modename.h, modename.refresh_rate);
 			if (ImGui::Selectable(modech, x == modesel))
