@@ -15,9 +15,6 @@ SDL_Window* m_window;
 SDL_Renderer* m_renderer;
 SDL_GLContext m_context;
 
-int gRenderMode = RM_OpenGL;
-std::string shname = "crt-geom";
-
 void initRenderingOpenGL()
 {
 	SWOSGLRenderer::Get().CreateWindow(m_windowWidth, m_windowHeight);
@@ -44,9 +41,6 @@ void finishRendering()
 
 int main(int argc, char** argv)
 {
-	if (argc > 1)
-		shname = std::string(argv[1]);
-
 	atexit(&finishRendering);
 
 	initRenderingOpenGL();

@@ -1,3 +1,11 @@
+/*
+	To-do-list
+	1. .vs, .fs 파일을 shaders 폴더로 이동하고, 작동 test
+	2. gap(Y)에 대한 부분 일반화 확인
+	3. AddTexture 메모리 할당 초기화 추가
+	4. CRT-Geom-Halation 예제로 test (BSNES 관련 파일을 anoxic에게 공유)
+*/
+
 #include "swosgl.h"
 #include <fstream>
 #include <sstream>
@@ -185,9 +193,10 @@ void SWOSGLRenderer::Initialize()
 		GL_NEAREST
 	);
 	GLPhase ph1 = GLPhase(
-		GetShader(m_UsingShaderName), 
+		GetShader("crt-geom"), 
 		glm::vec2(kVgaWidth, kVgaHeight), 
-		glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST
+		glm::vec2(m_WindowWidth, m_WindowHeight), 
+		GL_NEAREST
 	);	
 	std::vector<GLPhase> phases;
 	phases.push_back(ph0);
