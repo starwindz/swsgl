@@ -119,6 +119,10 @@ bool SWOSGLRenderer::CreateWindow(int w, int h)
 
 	// Enable alpha blending mode
 	glEnable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_POLYGON_SMOOTH);
+	glDisable(GL_STENCIL_TEST);
+	glEnable(GL_DITHER);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	std::cout << "Created Window with " << m_WindowWidth << "x" << m_WindowHeight << " size. RenderMode: OpenGL\n";
@@ -167,17 +171,19 @@ void SWOSGLRenderer::Initialize()
 	AddShader("basic", "sprite.vs", "sprite.fs");
 
 	AddShader("crt-geom", "crt-geom.vs", "crt-geom.fs");
+	//AddShader("crt-geom2", "crtgeom.vs", "crtgeom.fs");
 	AddShader("gaussian-horiz", "def.vs", "gaussian-horiz.fs");
 	AddShader("gaussian-vert", "def.vs", "gaussian-vert.fs");
 	AddShader("combine", "def.vs", "combine.fs");
 
+	AddShader("none", "def.vs", "def.fs");
 	AddShader("crt-simple", "crt-simple.vs", "crt-simple.fs");
 	AddShader("advanced-aa", "advanced-aa.vs", "advanced-aa.fs");
 	AddShader("lottes", "lottes.vs", "lottes.fs");
 	AddShader("pixellate", "def.vs", "pixellate.fs");
 	AddShader("sharp-bilinear", "def.vs", "sharp-bilinear.fs");
 	AddShader("AANN", "def.vs", "AANN.fs");
-	AddShader("fxaa", "def.vs", "fxaa.fs");
+	//AddShader("fxaa", "def.vs", "fxaa.fs");
 	// in case of pal-r57shell on intel internal graphic card, 
 	// it seems it is related to the limitation of OpenGL compatibility of the intel graphic card
 	// AddShader("pal-r57shell", "def.vs", "pal-r57shell.fs");  
@@ -187,50 +193,61 @@ void SWOSGLRenderer::Initialize()
 	m_ShaderMode = SM_CRT_SIMPLE;
 #elif (0)
 	m_ShaderMode = SM_CRT_LOTTES;
-#elif (0)
-	m_ShaderMode = SM_CRT_GEOM;
 #elif (1)
+	m_ShaderMode = SM_CRT_GEOM;
+#elif (0)
 	m_ShaderMode = SM_CRT_GEOM_HALATION;
 #endif
 
 	// Setup single or multi-phase(pass) shaders
-	std::vector<GLPhase> phases;
+	m_Phases["none"].push_back(GLPhase(GetShader("none"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST));
+	m_Phases["crt-simple"].push_back(GLPhase(GetShader("crt-simple"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST));
+	m_Phases["lottes"].push_back(GLPhase(GetShader("lottes"),         glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST));
+	m_Phases["crt-geom"].push_back(GLPhase(GetShader("crt-geom"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST));
+
+	m_Phases["crt-geom-hal"].push_back(GLPhase(GetShader("crt-geom"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_LINEAR));
+	m_Phases["crt-geom-hal"].push_back(GLPhase(GetShader("gaussian-horiz"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_LINEAR));
+	m_Phases["crt-geom-hal"].push_back(GLPhase(GetShader("gaussian-vert"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_LINEAR));
+	m_Phases["crt-geom-hal"].push_back(GLPhase(GetShader("combine"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_LINEAR));
+	/*
 	switch (m_ShaderMode) {
 		case SM_CRT_SIMPLE: {
-			GLPhase ph0 = GLPhase(GetShader("crt-simple"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			GLPhase ph0 = GLPhase(GetShader("crt-simple"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST);
 			phases.push_back(ph0);
 			break;
 		}
 		case SM_CRT_LOTTES: {
-			GLPhase ph0 = GLPhase(GetShader("lottes"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			GLPhase ph0 = GLPhase(GetShader("lottes"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST);
 			phases.push_back(ph0);
 			break;
 		}
 		case SM_CRT_GEOM: {
-			GLPhase ph0 = GLPhase(GetShader("crt-geom"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			GLPhase ph0 = GetShader("lottes"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEARESTGetShader("lottes"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST;
 			phases.push_back(ph0);
 			break;
 		}
 		case SM_CRT_GEOM_HALATION: {
-			GLPhase ph0 = GLPhase(GetShader("crt-geom"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			GLPhase ph0 = GLPhase(GetShader("crt-geom"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_LINEAR);
 			phases.push_back(ph0);
-			GLPhase ph1 = GLPhase(GetShader("gaussian-horiz"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
-			phases.push_back(ph0);
-			GLPhase ph2 = GLPhase(GetShader("gaussian-vert"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
-			phases.push_back(ph0);
-			GLPhase ph3 = GLPhase(GetShader("combine"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
-			phases.push_back(ph0);
+			GLPhase ph1 = GLPhase(GetShader("gaussian-horiz"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_LINEAR);
+			phases.push_back(ph1);
+			GLPhase ph2 = GLPhase(GetShader("gaussian-vert"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_LINEAR);
+			phases.push_back(ph2);
+			GLPhase ph3 = GLPhase(GetShader("combine"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_LINEAR);
+			phases.push_back(ph3);
 			break;
 		}
 		default: {
-			GLPhase ph0 = GLPhase(GetShader("advanced-aa"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(gVgaWidth, gVgaHeight), GL_NEAREST);
+			GLPhase ph0 = GLPhase(GetShader("advanced-aa"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST);
 			phases.push_back(ph0);
-			GLPhase ph1 = GLPhase(GetShader("crt-geom"), glm::vec2(gVgaWidth, gVgaHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST);
+			GLPhase ph1 = GLPhase(GetShader("crt-geom"), glm::vec2(m_WindowWidth, m_WindowHeight), glm::vec2(m_WindowWidth, m_WindowHeight), GL_NEAREST);
 			phases.push_back(ph1);
 			break;
 		}
 	}
-	GLPostProcess::Init(phases);
+	*/
+	m_UsingShaderName = "crt-simple";
+	GLPostProcess::Init();
 	
 	// Init Textures
 	AddMenuTextureFromBackgroundImage("back");
@@ -249,19 +266,19 @@ void SWOSGLRenderer::Initialize()
 	// Create mesh from textures
 	AddMesh("back")->SetupMesh(vert, ind, GetTexture("back"));
 	GetMesh("back")->SetPosition(glm::vec3(0.f, 0.f, 0.f));
-	GetMesh("back")->SetSize(glm::vec3(gVgaWidth, gVgaHeight, 1.f));
+	GetMesh("back")->SetSize(glm::vec3(m_WindowWidth, m_WindowHeight, 1.f));
 
 	AddMesh("menu")->SetupMesh(vert, ind, GetTexture("menu"));
 	GetMesh("menu")->SetPosition(glm::vec3(0.f, 0.f, 0.f));
-	GetMesh("menu")->SetSize(glm::vec3(gVgaWidth, gVgaHeight, 1.f));
+	GetMesh("menu")->SetSize(glm::vec3(m_WindowWidth, m_WindowHeight, 1.f));
 
 	AddMesh("play")->SetupMesh(vert, ind, GetTexture("play"));
 	GetMesh("play")->SetPosition(glm::vec3(0.f, 0.f, 0.f));
-	GetMesh("play")->SetSize(glm::vec3(gVgaWidth, gVgaHeight, 1.f));
+	GetMesh("play")->SetSize(glm::vec3(m_WindowWidth, m_WindowHeight, 1.f));
 
-	m_Framebuffer = std::make_shared<GLFramebuffer>(GetShader(m_UsingShaderName), 
+	m_Framebuffer = std::make_shared<GLFramebuffer>(
 		gVgaWidth, gVgaHeight, m_WindowWidth, m_WindowHeight, 8);
-	m_Projection = glm::ortho(0.f, (float)gVgaWidth, (float)gVgaHeight, 0.f, -1.f ,1.f);
+	m_Projection = glm::ortho(0.f, (float)m_WindowWidth, (float)m_WindowHeight, 0.f, -1.f ,1.f);
 }
 
 void SWOSGLRenderer::Finalize()
@@ -362,13 +379,26 @@ void SWOSGLRenderer::UpdateMenu()
 			}
 		}
 	}
+	if (ImGui::CollapsingHeader("Shader"))
+	{
+		if (ImGui::Button("none"))
+			m_UsingShaderName = "none";
+		if (ImGui::Button("crt-simple"))
+			m_UsingShaderName = "crt-simple";
+		if (ImGui::Button("lottes"))
+			m_UsingShaderName = "lottes";
+		if (ImGui::Button("crt-geom"))
+			m_UsingShaderName = "crt-geom";
+		if (ImGui::Button("crt-geom-hal"))
+			m_UsingShaderName = "crt-geom-hal";
+	}
 	ImGui::End();
 #endif
 }
 
 void SWOSGLRenderer::RenderMenu()
 {
-	GLPostProcess::Begin();
+	GLPostProcess::Begin(m_Phases.at(m_UsingShaderName));
 #if (1)
 	GetMesh("back")->Draw(GetShader("basic"), m_Projection);	// Draw "back" as Background
 #else
@@ -420,13 +450,26 @@ void SWOSGLRenderer::UpdateGame()
 	ImGui::Text("FPS: %.2f", io.Framerate);
 	ImGui::Text("Window Size: %d x %d", m_WindowWidth, m_WindowHeight);
 	ImGui::Text("Using Shader: %s", m_UsingShaderName.c_str());
+	if (ImGui::CollapsingHeader("Shader"))
+	{
+		if (ImGui::Button("none"))
+			m_UsingShaderName = "none";
+		if (ImGui::Button("crt-simple"))
+			m_UsingShaderName = "crt-simple";
+		if (ImGui::Button("lottes"))
+			m_UsingShaderName = "lottes";
+		if (ImGui::Button("crt-geom"))
+			m_UsingShaderName = "crt-geom";
+		if (ImGui::Button("crt-geom-hal"))
+			m_UsingShaderName = "crt-geom-hal";
+	}
 	ImGui::End();
 #endif
 }
 
 void SWOSGLRenderer::RenderGame()
 {
-	GLPostProcess::Begin();
+	GLPostProcess::Begin(m_Phases.at(m_UsingShaderName));
 	GetMesh("play")->Draw(GetShader("basic"), m_Projection);
 	GLPostProcess::End(m_WindowWidth, m_WindowHeight);
 

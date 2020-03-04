@@ -20,10 +20,11 @@ struct GLPhase
 class GLPostProcess
 {
 public:
-	static void Init(const std::vector<GLPhase>& m_Phases);
-	static void Begin();
+	static void Init();
+	static void Begin(const std::vector<GLPhase>& phases);
 	static void End(GLuint widht, GLuint height);
 private:
 	static std::vector<std::shared_ptr<GLFramebuffer>> s_Framebuffers;
+	static std::vector<GLPhase> s_Phases;
 };
 

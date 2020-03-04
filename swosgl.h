@@ -70,6 +70,7 @@ private:
 	std::unordered_map<std::string, std::shared_ptr<GLShader>> m_Shaders;
 	std::unordered_map<std::string, std::shared_ptr<GLTexture>> m_Textures;
 	std::unordered_map<std::string, std::shared_ptr<GLMesh>> m_Meshes;
+	std::unordered_map<std::string, std::vector<GLPhase>> m_Phases;
 	std::shared_ptr<GLFramebuffer> m_Framebuffer;
 	glm::mat4 m_Projection;
 	glm::mat4 m_View;

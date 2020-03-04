@@ -21,9 +21,11 @@ struct FrameVertex
 class GLFramebuffer
 {
 public:
-	GLFramebuffer(std::shared_ptr<GLShader> shader, GLuint width, GLuint height, GLuint targetwidth, GLuint targetheight, GLuint multisample);
-	virtual ~GLFramebuffer() = default;
-	void Bind();
+	GLFramebuffer(GLuint width, GLuint height, 
+		GLuint targetwidth, GLuint targetheight, GLuint multisample, GLuint Filter = GL_LINEAR);
+	virtual ~GLFramebuffer();
+	void Bind(std::shared_ptr<GLShader> shader);
+	void Read();
 	void UnBind();
 	GLuint GetWidht() { return m_Width; }
 	GLuint GetHeight() { return m_Height; }
@@ -36,7 +38,6 @@ private:
 	GLuint m_VAO;
 	GLuint m_FBO;
 	GLuint m_RBO;
-	GLuint m_MSFBO;
 	GLuint m_Width;
 	GLuint m_Height;
 	GLuint m_TargetWidth;
